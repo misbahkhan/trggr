@@ -32,10 +32,10 @@ api.use({ client_id: '992cfa2cf00e43838ff399ff394019f7',
       client_secret: '7ca2d577e4144dda82a4acc157870b7f' });
 
 
-var redirect_uri = 'http://www.infinicoisn.com/handleauth';
+var redirect_uri = 'http://www.infinicoins.com/handleauth';
 
 exports.authorize_user = function(req, res) {
-    res.redirect(api.get_authorization_url(rediret_url, { scope: ['likes'], state: 'a state' }));
+    res.redirect(api.get_authorization_url(redirect_uri, { scope: ['likes'], state: 'a state' }));
 };
 
 exports.handleauth = function(req, res) {
