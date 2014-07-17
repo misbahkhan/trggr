@@ -31,6 +31,7 @@ var api = require('instagram-node').instagram();
 api.use({ client_id: '992cfa2cf00e43838ff399ff394019f7',
       client_secret: '7ca2d577e4144dda82a4acc157870b7f' });
 
+api.add_user_subscription('http://www.infinicoins.com/subscription', function(err, result, limit){});
 
 var redirect_uri = 'http://www.infinicoins.com/handleauth';
 
@@ -50,11 +51,21 @@ exports.handleauth = function(req, res) {
     });
 }
 
+exports.subscribe = function(req, res) {
+    res.end(req.query.hub_challenge);
+}
+
+exports.newpost = function(req, res) {
+    console.log(req.body);
+    res.end();
+}
+
 app.get('/', routes.index);
 app.get('/users', user.list);
 app.get('/authorize_user', exports.authorize_user);
 app.get('/handleauth', exports.handleauth);
-
+app.get('/subscription', exports.subscribe);
+app.post('/subscriptions', exports.newpost);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
