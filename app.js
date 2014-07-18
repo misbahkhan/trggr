@@ -124,13 +124,28 @@ function getComments() {
     });
 }
 
-var a
+function handleComment(comment) {
+    if( comments[id].indexOf(commentobj.id) !== -1){                    
+        console.log("found in recent cache");
+        return;
+    }
+    //check if comment is in checked
+        //if yes return;
+        //else 
+            //add
+            //check if person is user
+            //check user's trggr word
+                //trggr or not
+}
 
 function queue(id, speed) {
     pinglist[id] = setInterval(function(){
         var url = "https://api.instagram.com/v1/media/"+id+"/comments?access_token="+access_token;
         request( url, function( error, response, body ) {
             if (!error && response.statusCode == 200) {
+                for(var i = 0; i < body.data.length; ++i){
+                    handleComment(body.data[i]);
+                }               
                 console.log(body);
             } else if (response.statusCode == 400) {
                 console.log("handle deleted pic"); 
