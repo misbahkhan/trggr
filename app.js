@@ -95,6 +95,7 @@ function getListings() {
         success: function(results) {
             for(var i = 0; i < results.length; ++i){
                 pictures.push(results[i].get('ig_id'));
+                queue( results[i].get('ig_id'), 5000 ); 
             }
         },
         error: function(error) {
@@ -126,9 +127,22 @@ function getComments() {
 var a
 
 function queue(id, speed) {
-    pingList[id] = setInterval(function(){
-        
+    pinglist[id] = setInterval(function(){
+        var url = "https://api.instagram.com/v1/media/"+id+"/comments?access_token="+access_token;
+        request( url, function( error, response, body ) {
+            if (!error && response.statusCode == 200) {
+                console.log(body);
+            } else if (response.statusCode == 400) {
+                console.log("handle deleted pic"); 
+                console.log( body );
+            }            
+        });            
     }, speed);
+}
+
+function changespeed(id, speed) {
+    clearTimeout( pingList[id] );
+    queue(id, speed);
 }
 
 var access_token;
@@ -149,18 +163,34 @@ exports.newpost = function(req, res) {
                 console.log(response.headers["x-ratelimit-remaining"]);
                 var data = JSON.parse(body); 
                 data = data.data;
-                console.log(data);
                 if( data.tags.indexOf( tag ) !== -1 ){
-                    console.log("is trggr image");
+                    var listings = Parse.Object.extend("listings");
+                    var listing = new listings();
+                    listing.set("ig_id", data.id);
+                    listing.set("created_by_ig_uid", data.user.id);
+                    listing.set("posted_on", data.created_time);
+                    listing.set("caption", data.caption.text);
+                    listing.set("stock", 10);
+                    listing.set("stock_remaining", 1);
+                    listing.set("tags", data.tags);
+                    listing.set("url", data.images.standard_resolution.url);
+                    listing.save(null, {
+                        success: function(listing) {
+                            queue(data.id, 5000);
+                        }, 
+                        error: function(listing, error) {
+                            console.log('Failed to create new object, with error code: ' + error.message);
+                        }
+                    });
                 } else {
                     console.log("is not trggr image");
                 }
             } else if (response.statusCode == 400) {
+                //handle deleted image
                 console.log(body);
             }     
         }); 
     }
-    console.log(update.length);
 }
 
 app.get('/', routes.index);
