@@ -26,6 +26,8 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
+var request = require('request');
+
 var Parse = require('parse').Parse;
 Parse.initialize("fdF95nvmdcNwgUtCzToLgLMFoKgjFUHB8WdoGwty", "hZfyIqOB60P4vySuiRnYOQFsG6ugSQ69KiCBgyos");                                                                       
 
@@ -65,6 +67,7 @@ function islisting(id, access_token) {
 var tokens = []; 
 var pictures = [];
 var comments = {}; 
+var pinglist = {};
 
 function getTokens() {
     var query = new Parse.Query(Parse.User);
@@ -76,6 +79,7 @@ function getTokens() {
                     tokens.push( user_token );
                 }
             }
+            access_token = tokens[0];
         },
         error: function(error) {
             console.log("Error: "+ error.code + " " + error.message); 
@@ -119,13 +123,44 @@ function getComments() {
     });
 }
 
+var a
+
+function queue(id, speed) {
+    pingList[id] = setInterval(function(){
+        
+    }, speed);
+}
+
+var access_token;
 getTokens();
 getListings();
 getComments(); 
 
+var tag = "test"; 
+
 exports.newpost = function(req, res) {
-    console.log(req.body);
     res.end();
+    var update = req.body; 
+    for( var i = 0; i < update.length; ++i){
+        var media_id = update[i].data.media_id; 
+        var url = "https://api.instagram.com/v1/media/"+media_id+"?access_token="+access_token;
+        request( url, function( error, response, body ) {
+            if (!error && response.statusCode == 200) {
+                console.log(response.headers["x-ratelimit-remaining"]);
+                var data = JSON.parse(body); 
+                data = data.data;
+                console.log(data);
+                if( data.tags.indexOf( tag ) !== -1 ){
+                    console.log("is trggr image");
+                } else {
+                    console.log("is not trggr image");
+                }
+            } else if (response.statusCode == 400) {
+                console.log(body);
+            }     
+        }); 
+    }
+    console.log(update.length);
 }
 
 app.get('/', routes.index);
