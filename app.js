@@ -64,7 +64,7 @@ function islisting(id, access_token) {
 
 var tokens = []; 
 var pictures = [];
-var comments = []; 
+var comments = {}; 
 
 function getTokens() {
     var query = new Parse.Query(Parse.User);
@@ -100,11 +100,28 @@ function getListings() {
 }
 
 function getComments() {
-
+    var checking = Parse.Object.extend("checked");
+    var check = new Parse.Query(checking);
+    check.find({
+        success: function(results) {
+            for(var i = 0; i < results.length; ++i){
+                var picid = results[i].get('pic_id');
+                var commentid = results[i].get('comment_id');
+                if( !Array.isArray(comments[picid]) ){
+                    comments[picid] = []; 
+                }
+                comments[picid].push(commentid);
+            }    
+        },
+         error: function(error) {
+            console.log("Error: " + error.code + " " + error.message);
+        }
+    });
 }
 
 getTokens();
 getListings();
+getComments(); 
 
 exports.newpost = function(req, res) {
     console.log(req.body);
