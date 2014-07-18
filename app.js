@@ -26,6 +26,9 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
+var Parse = require('parse').Parse;
+Parse.initialize("fdF95nvmdcNwgUtCzToLgLMFoKgjFUHB8WdoGwty", "hZfyIqOB60P4vySuiRnYOQFsG6ugSQ69KiCBgyos");                                                                       
+
 var api = require('instagram-node').instagram();
 
 api.use({ client_id: '992cfa2cf00e43838ff399ff394019f7',
@@ -54,6 +57,54 @@ exports.handleauth = function(req, res) {
 exports.subscribe = function(req, res) {
     res.end(req.query.hub_challenge);
 }
+
+function islisting(id, access_token) {
+    
+}
+
+var tokens = []; 
+var pictures = [];
+var comments = []; 
+
+function getTokens() {
+    var query = new Parse.Query(Parse.User);
+    query.find({
+        success: function(users) {
+            for (var i = 0; i < users.length; ++i){
+                var user_token = users[i].get('access_token');
+                if( user_token !== undefined){
+                    tokens.push( user_token );
+                }
+            }
+        },
+        error: function(error) {
+            console.log("Error: "+ error.code + " " + error.message); 
+        }
+    });
+}
+
+function getListings() {
+    var listings = Parse.Object.extend("listings");
+    var listing = new Parse.Query(listings);
+    listing.greaterThan("stock_remaining", 0);
+    listing.find({
+        success: function(results) {
+            for(var i = 0; i < results.length; ++i){
+                pictures.push(results[i].get('ig_id'));
+            }
+        },
+        error: function(error) {
+            console.log("Error: " + error.code + " " + error.message);
+        }
+    });
+}
+
+function getComments() {
+
+}
+
+getTokens();
+getListings();
 
 exports.newpost = function(req, res) {
     console.log(req.body);
