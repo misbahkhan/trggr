@@ -254,6 +254,9 @@ function deleteListing (id) {
 }
 
 function handleDeleted (id) {
+    clearInterval( pinglist[id] );
+    delete pinglist[id];
+    delete comments[id]; 
     deleteListing(id); 
     deleteComments(id);
 }
