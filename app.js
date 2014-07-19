@@ -210,6 +210,54 @@ function handleComment(id, comment) {
     });
 }
 
+function destroy (obj) {
+    obj.destroy({
+        success: function(result) {
+            console.log("deleted object");     
+        }, 
+        error: function(result, error) {
+            console.log("Error: " + error.code + " " + error.message);
+        }
+    });
+}
+
+function deleteComments (pic_id) {
+    var checked = Parse.Object.extend("checked");
+    var checking = new Parse.Query(checked);
+    checking.equalTo("pic_id", pic_id);
+    checking.find({
+        success: function(results) {
+            for (var i = 0; i < results.length; ++i) {
+                destroy( results[i] ); 
+            }    
+        }, 
+        error: function(error) {
+            console.log("Error: " + error.code + " " + error.message);        
+        }
+    });
+}
+
+function deleteListing (id) {
+    var listings = Parse.Object.extend("listings"); 
+    var listing = new Parse.Query(listings);
+    listing.equalTo("ig_id", id);
+    listing.find({
+        success: function(results) {
+            for (var i = 0; i < results.length; ++i) {
+                destroy( results[i] ); 
+            }
+        },
+        error: function (error) {
+            console.log("Error: " + error.code + " " + error.message);  
+        }
+    });
+}
+
+function handleDeleted (id) {
+    deleteListing(id); 
+    deleteComments(id);
+}
+
 function queue(id, speed) {
     pinglist[id] = setInterval(function(){
         var url = "https://api.instagram.com/v1/media/"+id+"/comments?access_token="+access_token;
@@ -222,9 +270,8 @@ function queue(id, speed) {
                     handleComment(id, data[i]);
                 }               
             } else if (response.statusCode == 400) {
-                console.log (id); 
-                console.log("deleted pic"); 
-                //console.log( body );
+                handleDeleted(id);
+                console.log(body);
             }            
         });            
     }, speed);
