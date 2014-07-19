@@ -150,7 +150,7 @@ function maketrggr(id, comment) {
     var mktrggr = new trggr();
     mktrggr.set("comment", comment.text);
     mktrggr.set("comment_id", comment.id);
-    mktrggr.set("perosn_id", comment.from.id);
+    mktrggr.set("person_id", comment.from.id);
     mktrggr.set("pic_id", id);
     mktrggr.set("state", "pending");
     mktrggr.set("trggred_time", comment.created_time);
