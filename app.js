@@ -112,10 +112,7 @@ function getComments() {
             for(var i = 0; i < results.length; ++i){
                 var picid = results[i].get('pic_id');
                 var commentid = results[i].get('comment_id');
-                if( !Array.isArray(comments[picid]) ){
-                    comments[picid] = []; 
-                }
-                comments[picid].push(commentid);
+                cacheComment(picid, commentid);
             }    
         },
          error: function(error) {
@@ -124,11 +121,80 @@ function getComments() {
     });
 }
 
-function handleComment(comment) {
-    if( comments[id].indexOf(commentobj.id) !== -1){                    
-        console.log("found in recent cache");
-        return;
+function cacheComment(id, commentid) {
+    if( !Array.isArray(comments[id]) ) {
+        comments[id] = []; 
     }
+    if(comments[id].indexOf(commentid) === -1){
+        comments[id].push(commentid);
+    }
+}
+
+function databaseComment(id, comment) {
+    var checking = Parse.Object.extend("checked");
+    var check = new checking(); 
+    check.set("pic_id", id);
+    check.set("comment_id", comment.id);
+    check.set("person_id", comment.from.id);
+    check.save(null, {
+        success: function(object) {
+        }, 
+        error: function(object, error) {
+            console.log('Failed to create new object, with error code: ' + error.message);
+        }
+    });  
+}
+
+function maketrggr(id, comment) {
+    console.log("making trggr");
+    //make trggr
+}
+
+function handleComment(id, comment) {
+    if( Array.isArray(comments[id]) ){
+        if(comments[id].indexOf(comment.id) !== -1){                    
+            console.log("found in recent cache");
+            return;
+        }
+    }    
+    
+    cacheComment(id, comment.id);
+        
+    var checking = Parse.Object.extend("checked");
+    var check = new Parse.Query(checking);
+    check.equalTo("comment_id", comment.id);
+    check.count({
+        success: function(count) {
+            if(count < 1){
+                databaseComment(id, comment);
+                var query = new Parse.Query(Parse.User);
+                query.equalTo("ig_id", comment.from.id);
+                query.first({
+                    success: function(user) {
+                        var trggrword = user.get("keyword"); 
+                        var text = comment.text; 
+                        textarr = text.split(" ");
+                        if(textarr.indexOf(trggrword) !== -1){
+                            maketrggr(id, comment);                    
+                        }else{
+                            console.log("isn't trggr");
+                            return;
+                        }
+                    }, 
+                    error: function(user) {
+                        console.log("Error: " + error.code + " " + error.message);
+                    }
+                });
+            }else{
+                console.log("comment checked");
+                return;
+            }
+        },
+        error: function(error) {
+            console.log("Error: " + error.code + " " + error.message);        
+        }
+    });
+    
     //check if comment is in checked
         //if yes return;
         //else 
@@ -143,13 +209,16 @@ function queue(id, speed) {
         var url = "https://api.instagram.com/v1/media/"+id+"/comments?access_token="+access_token;
         request( url, function( error, response, body ) {
             if (!error && response.statusCode == 200) {
-                for(var i = 0; i < body.data.length; ++i){
-                    handleComment(body.data[i]);
+                var data = JSON.parse(body);
+                data = data.data; 
+                if(data.length < 1) return;
+                for(var i = 0; i < data.length; ++i){
+                    handleComment(id, data[i]);
                 }               
-                console.log(body);
             } else if (response.statusCode == 400) {
-                console.log("handle deleted pic"); 
-                console.log( body );
+                console.log (id); 
+                console.log("deleted pic"); 
+                //console.log( body );
             }            
         });            
     }, speed);
