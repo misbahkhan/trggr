@@ -146,8 +146,22 @@ function databaseComment(id, comment) {
 }
 
 function maketrggr(id, comment) {
-    console.log("making trggr");
-    //make trggr
+    var trggr = Parse.Object.extend("trggrs");
+    var mktrggr = new trggr();
+    mktrggr.set("comment", comment.text);
+    mktrggr.set("comment_id", comment.id);
+    mktrggr.set("perosn_id", comment.from.id);
+    mktrggr.set("pic_id", id);
+    mktrggr.set("state", "pending");
+    mktrggr.set("trggred_time", comment.created_time);
+    mktrggr.save(null, {
+        success: function (mktrggr) {
+            console.log("New trggr created with objectId: " + mktrggr.id);
+        },
+        error: function(mktrggr, error) {
+            console.log("Failed to create new trggr, with error code: " + error.message);    
+        }
+    });    
 }
 
 function handleComment(id, comment) {
@@ -194,14 +208,6 @@ function handleComment(id, comment) {
             console.log("Error: " + error.code + " " + error.message);        
         }
     });
-    
-    //check if comment is in checked
-        //if yes return;
-        //else 
-            //add
-            //check if person is user
-            //check user's trggr word
-                //trggr or not
 }
 
 function queue(id, speed) {
