@@ -48,10 +48,10 @@ exports.handleauth = function(req, res) {
     api.authorize_user(req.query.code, redirect_uri, function(err, result) {
         if (err) {
             console.log(err.body);
-            res.send("Didn't work"); 
+            res.json("Didn't work"); 
         } else {
             console.log("token: "+result.access_token);
-            res.send("Worked"); 
+            res.json(result);
         }
     });
 }
@@ -68,6 +68,8 @@ var tokens = [];
 var pictures = [];
 var comments = {}; 
 var pinglist = {};
+var pricelist = {};
+var listingtitles = {};
 
 function getTokens() {
     var query = new Parse.Query(Parse.User);
@@ -94,6 +96,8 @@ function getListings() {
     listing.find({
         success: function(results) {
             for(var i = 0; i < results.length; ++i){
+                pricelist[results[i].get('ig_id')] = results[i].get('price');
+                listingtitles[results[i].get('ig_id')] = results[i].get('caption');
                 pictures.push(results[i].get('ig_id'));
                 queue( results[i].get('ig_id'), 5000 ); 
             }
@@ -154,6 +158,8 @@ function maketrggr(id, comment) {
     mktrggr.set("pic_id", id);
     mktrggr.set("state", "pending");
     mktrggr.set("trggred_time", comment.created_time);
+    mktrggr.set("price", pricelist[id]);
+    mktrggr.set("caption", listingtitles[id]);
     mktrggr.save(null, {
         success: function (mktrggr) {
             console.log("New trggr created with objectId: " + mktrggr.id);
@@ -303,7 +309,16 @@ exports.newpost = function(req, res) {
                 console.log(response.headers["x-ratelimit-remaining"]);
                 var data = JSON.parse(body); 
                 data = data.data;
+                if( data.tags.length < 2 ){
+                    console.log("not enough tags"); 
+                    return; 
+                }
                 if( data.tags.indexOf( tag ) !== -1 ){
+                    var price = 1000;
+
+                    price = data.tags[data.tags.length - 1];
+                    price *= 100; 
+                    
                     var listings = Parse.Object.extend("listings");
                     var listing = new listings();
                     listing.set("ig_id", data.id);
@@ -312,11 +327,14 @@ exports.newpost = function(req, res) {
                     listing.set("caption", data.caption.text);
                     listing.set("stock", 10);
                     listing.set("stock_remaining", 1);
+                    listing.set("price", price); 
                     listing.set("tags", data.tags);
                     listing.set("url", data.images.standard_resolution.url);
                     listing.save(null, {
                         success: function(listing) {
                             queue(data.id, 5000);
+                            listingtitles[data.id] = data.caption.text;
+                            pricelist[data.id] = price; 
                         }, 
                         error: function(listing, error) {
                             console.log('Failed to create new object, with error code: ' + error.message);
