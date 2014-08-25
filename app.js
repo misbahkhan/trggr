@@ -278,7 +278,7 @@ function queue(id, speed) {
                 for(var i = 0; i < data.length; ++i){
                     handleComment(id, data[i]);
                 }               
-            } else if (response.statusCode == 400) {
+            } else { //if (response.statusCode == 400) {
                 handleDeleted(id);
                 console.log(body);
             }            
