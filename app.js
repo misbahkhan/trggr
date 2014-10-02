@@ -72,6 +72,9 @@ var pricelist = {};
 var listingtitles = {};
 
 function getTokens() {
+    access_token = "1406166242.992cfa2.e903f530cfe044f391958163a757c67c"; 
+    return;
+    
     var query = new Parse.Query(Parse.User);
     query.find({
         success: function(users) {
@@ -81,7 +84,7 @@ function getTokens() {
                     tokens.push( user_token );
                 }
             }
-            access_token = tokens[0];
+            access_token = tokens[0];            
         },
         error: function(error) {
             console.log("Error: "+ error.code + " " + error.message); 
