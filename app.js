@@ -36,9 +36,12 @@ var api = require('instagram-node').instagram();
 api.use({ client_id: '992cfa2cf00e43838ff399ff394019f7',
       client_secret: '7ca2d577e4144dda82a4acc157870b7f' });
 
-api.add_user_subscription('http://www.infinicoins.com/subscription', function(err, result, limit){});
+api.add_user_subscription('http://162.243.142.163:3030/subscription', 
+    function(err, result, limit){
+    }
+);
 
-var redirect_uri = 'http://www.infinicoins.com/handleauth';
+var redirect_uri = 'http://162.243.142.163:3030/handleauth';
 
 exports.authorize_user = function(req, res) {
     res.redirect(api.get_authorization_url(redirect_uri, { scope: ['likes'], state: 'a state' }));
@@ -51,13 +54,16 @@ exports.handleauth = function(req, res) {
             res.json("Didn't work"); 
         } else {
             console.log("token: "+result.access_token);
+            var username = result.user.username; 
+            //check if username is already associated
+            
             res.json(result);
         }
     });
 }
 
 exports.subscribe = function(req, res) {
-    res.end(req.query.hub_challenge);
+    res.end(req.query["hub.challenge"]);
 }
 
 function islisting(id, access_token) {
@@ -72,7 +78,8 @@ var pricelist = {};
 var listingtitles = {};
 
 function getTokens() {
-    access_token = "1406166242.992cfa2.e903f530cfe044f391958163a757c67c"; 
+    //overrides access_token
+    access_token = "1432207230.992cfa2.b8c44eab1d674b87ac44eb7c443fe60c"; 
     return;
     
     var query = new Parse.Query(Parse.User);
@@ -194,7 +201,8 @@ function handleComment(id, comment) {
                 query.equalTo("ig_id", comment.from.id);
                 query.first({
                     success: function(user) {
-                        var trggrword = user.get("keyword"); 
+                        console.log(user);
+                        var trggrword = user.get("keyword");
                         var text = comment.text; 
                         textarr = text.split(" ");
                         if(textarr.indexOf(trggrword) !== -1){
@@ -205,6 +213,8 @@ function handleComment(id, comment) {
                         }
                     }, 
                     error: function(user) {
+                        console.log(user);
+                        var error = user; 
                         console.log("Error: " + error.code + " " + error.message);
                     }
                 });
@@ -302,6 +312,7 @@ getComments();
 var tag = "test"; 
 
 exports.newpost = function(req, res) {
+    console.log("new post");
     res.end();
     var update = req.body; 
     for( var i = 0; i < update.length; ++i){
@@ -359,7 +370,7 @@ app.get('/users', user.list);
 app.get('/authorize_user', exports.authorize_user);
 app.get('/handleauth', exports.handleauth);
 app.get('/subscription', exports.subscribe);
-app.post('/subscriptions', exports.newpost);
+app.post('/subscription', exports.newpost);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
